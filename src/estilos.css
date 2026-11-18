@@ -252,3 +252,7 @@ details .opciones { margin-top: 10px; }
   font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 5.5rem; line-height: 1; color: #fff;
   text-shadow: 0 4px 0 var(--rojo), 0 10px 30px rgba(225, 29, 72, .55), 0 0 2px #000; }
 .pista-cuenta { color: var(--rojo); font-size: 1.05rem; font-weight: 800; }
+
+/* El regalo, centrado dentro de su zona */
+.regalo-zona > div { display: grid; justify-items: center; width: 100%; }
+.regalo { display: block; margin: 0 auto; }
