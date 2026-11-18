@@ -176,7 +176,7 @@ function invitacion(p: ParticipanteAdmin, correo: string, config: Config) {
   return [
     `¡Hola, ${p.nombre}! 🎅`,
     '',
-    'Ya se hizo el sorteo del amigo secreto de las 6 familias.',
+    'Ya se hizo el sorteo del amigo secreto del #TeamNavideño.',
     'Entra, escribe tu carta con 3 regalos que te gustaría recibir y descubre a quién le regalas tú.',
     '',
     `👉 ${link}`,

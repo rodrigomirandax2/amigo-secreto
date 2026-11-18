@@ -54,7 +54,7 @@ export default function FotoNinos() {
       transition={{ type: 'spring', bounce: 0.3, delay: 0.15 }}
     >
       <figure className="foto">
-        <img src={`${import.meta.env.BASE_URL}ninos.jpg`} alt="Los niños de las 6 familias" />
+        <img src={`${import.meta.env.BASE_URL}ninos.jpg`} alt="Los niños del #TeamNavideño" />
       </figure>
 
       <svg className="foto-flechas" viewBox="0 0 100 140" aria-hidden="true">
