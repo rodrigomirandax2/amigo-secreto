@@ -11,7 +11,7 @@ interface Sesion { correo: string; codigo: string }
 type Pestana = 'arbol' | 'amigo' | 'carta'
 const CLAVE = 'amigoSecreto'
 // ?demo=regalo: entra solo y va directo al regalo cerrado, para probar la revelación.
-const SOLO_REGALO = DEMO && new URLSearchParams(location.search).get('demo') === 'regalo'
+const SOLO_REGALO = DEMO && ['regalo', 'amigo-sin-carta'].includes(new URLSearchParams(location.search).get('demo') ?? '')
 const entrada = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } }
 
 function leerSesion(): Sesion | null {

@@ -36,6 +36,9 @@ export function rpcDemo(funcion: string): unknown {
           : { opcion1: 'Un libro de cocina', opcion2: 'Audífonos inalámbricos', opcion3: 'Una planta para la casa', mensaje: 'Me gusta el azul' }), monto: '$15.000', fecha: 'Martes 24 de diciembre', sorteo_hecho: true,
       }
     case 'mi_amigo':
+      // ?demo=amigo-sin-carta: tu amigo todavía no escribe la suya.
+      if (new URLSearchParams(location.search).get('demo') === 'amigo-sin-carta')
+        return { nombre: null, descripcion: null, opcion1: null, opcion2: null, opcion3: null, mensaje: null }
       return {
         nombre: 'Maxi', descripcion: '',
         opcion1: 'Un set de Lego de dinosaurios', opcion2: 'Una pelota de fútbol', opcion3: 'Lápices de colores y un cuaderno de dibujo',
