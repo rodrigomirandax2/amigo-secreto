@@ -306,7 +306,7 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
 
   return (
     <section className="tarjeta">
-      <div className="tarjeta-cabeza">
+      <div className="tarjeta-cabeza centrada">
         <img src={ILUSTRACION.brillos} alt="" />
         <div>
           <h2>Tu amigo secreto</h2>

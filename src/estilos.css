@@ -256,3 +256,5 @@ details .opciones { margin-top: 10px; }
 /* El regalo, centrado dentro de su zona */
 .regalo-zona > div { display: grid; justify-items: center; width: 100%; }
 .regalo { display: block; margin: 0 auto; }
+.tarjeta-cabeza.centrada { flex-direction: column; text-align: center; gap: 6px; }
+.tarjeta-cabeza.centrada img { width: 52px; height: 52px; }
