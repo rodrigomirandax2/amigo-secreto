@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Hero, ILUSTRACION } from './Decoracion'
 import { nombreFamilia } from './colores'
 import { DEMO, quien, rpc, textoError, type DatosAdmin, type ParticipanteAdmin } from './supabase'
@@ -18,20 +18,42 @@ function Cabeza({ icono, titulo, sub }: { icono: string; titulo: string; sub?: s
   )
 }
 
+// La sesión del panel queda guardada en este navegador hasta "Cerrar sesión".
+const CLAVE_SESION = DEMO ? 'amigoSecretoAdminDemo' : 'amigoSecretoAdmin'
+function leerClave() { try { return localStorage.getItem(CLAVE_SESION) ?? '' } catch { return '' } }
+function guardarClave(c: string | null) {
+  try { c === null ? localStorage.removeItem(CLAVE_SESION) : localStorage.setItem(CLAVE_SESION, c) } catch { /* sin storage */ }
+}
+
 export default function Admin() {
-  const [clave, setClave] = useState('')
+  const [clave, setClave] = useState(leerClave)
   const [datos, setDatos] = useState<DatosAdmin | null>(null)
   const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(() => !!leerClave())
 
   async function cargar(c = clave) {
     setDatos(await rpc<DatosAdmin>('admin_listar', { p_clave: c }))
   }
 
+  useEffect(() => {
+    const guardada = leerClave()
+    if (!guardada) return
+    cargar(guardada).catch(() => guardarClave(null)).finally(() => setCargando(false))
+  }, [])
+
   async function entrar(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    try { await cargar() } catch (err) { setError(textoError(err)) }
+    try { await cargar(); guardarClave(clave) } catch (err) { setError(textoError(err)) }
   }
+
+  function salir() {
+    guardarClave(null)
+    setClave('')
+    setDatos(null)
+  }
+
+  if (cargando) return null
 
   return (
     <div className="contenedor">
@@ -52,7 +74,10 @@ export default function Admin() {
         <>
           <Sorteo clave={clave} datos={datos} onCambio={() => cargar()} />
           <DatosIntercambio clave={clave} inicial={datos.config} />
-          <Participantes lista={datos.participantes ?? []} clave={clave} />
+          <Participantes lista={datos.participantes ?? []} clave={clave} config={datos.config} />
+          <div style={{ textAlign: 'center' }}>
+            <button className="enlace" onClick={salir}>Cerrar sesión</button>
+          </div>
         </>
       )}
     </div>
@@ -126,7 +151,7 @@ function Sorteo({ clave, datos, onCambio }: { clave: string; datos: DatosAdmin; 
   )
 }
 
-function Participantes({ lista, clave }: { lista: ParticipanteAdmin[]; clave: string }) {
+function Participantes({ lista, clave, config }: { lista: ParticipanteAdmin[]; clave: string; config: DatosAdmin["config"] }) {
   const familias = [...new Set(lista.map(p => p.familia))]
   return (
     <section className="tarjeta">
@@ -134,14 +159,44 @@ function Participantes({ lista, clave }: { lista: ParticipanteAdmin[]; clave: st
       {familias.map(f => (
         <div key={f}>
           <p className="familia-titulo">{nombreFamilia(lista, f)}</p>
-          {lista.filter(p => p.familia === f).map(p => <Fila key={p.id} p={p} clave={clave} />)}
+          {lista.filter(p => p.familia === f).map(p => <Fila key={p.id} p={p} clave={clave} config={config} />)}
         </div>
       ))}
     </section>
   )
 }
 
-function Fila({ p, clave }: { p: ParticipanteAdmin; clave: string }) {
+type Config = DatosAdmin['config']
+
+function invitacion(p: ParticipanteAdmin, correo: string, config: Config) {
+  const link = `${location.origin}${import.meta.env.BASE_URL}?correo=${encodeURIComponent(correo.trim())}`
+  const datos = [config.monto && `💰 Monto máximo: ${config.monto}`, config.fecha && `📅 Intercambio: ${config.fecha}`].filter(Boolean)
+  return [
+    `¡Hola, ${p.nombre}! 🎅`,
+    '',
+    'Ya se hizo el sorteo del amigo secreto de las 6 familias.',
+    'Entra, escribe tu carta con 3 regalos que te gustaría recibir y descubre a quién le regalas tú.',
+    '',
+    `👉 ${link}`,
+    `Tu correo: ${correo.trim()}`,
+    `Tu código: ${p.codigo}`,
+    ...(datos.length ? ['', ...datos] : []),
+    '',
+    '¡No le cuentes a nadie quién te tocó! 🤫',
+    '#TeamNavideño',
+  ].join('\n')
+}
+
+// Recuerda en este navegador a quién ya se le abrió el correo.
+const CLAVE_ENVIADOS = 'amigoSecretoCorreos'
+function leerEnviados(): Set<number> {
+  try { return new Set(JSON.parse(localStorage.getItem(CLAVE_ENVIADOS) ?? '[]')) } catch { return new Set() }
+}
+function marcarEnviado(id: number) {
+  try { localStorage.setItem(CLAVE_ENVIADOS, JSON.stringify([...leerEnviados().add(id)])) } catch { /* sin storage */ }
+}
+
+function Fila({ p, clave, config }: { p: ParticipanteAdmin; clave: string; config: Config }) {
   const [correo, setCorreo] = useState(p.correo ?? '')
   const [guardado, setGuardado] = useState('Guardar')
   const [copiado, setCopiado] = useState('Copiar invitación')
@@ -153,11 +208,20 @@ function Fila({ p, clave }: { p: ParticipanteAdmin; clave: string }) {
     } catch (err) { setGuardado('Error'); alert(textoError(err)) }
   }
 
+  const [enviado, setEnviado] = useState(() => leerEnviados().has(p.id))
+
   async function copiar() {
-    const link = `${location.origin}${import.meta.env.BASE_URL}?correo=${encodeURIComponent(correo)}`
-    const texto = `🎄 #TeamNavideño · Amigo secreto\nEntra aquí: ${link}\nTu correo: ${correo}\nTu código: ${p.codigo}`
+    const texto = invitacion(p, correo, config)
     try { await navigator.clipboard.writeText(texto); setCopiado('¡Copiada!') }
     catch { prompt('Copia este texto:', texto) }
+  }
+
+  // Abre la app de correo con todo escrito: sólo falta apretar Enviar.
+  function enviarCorreo() {
+    const asunto = `🎄 #TeamNavideño: ya está el sorteo del amigo secreto`
+    location.href = `mailto:${encodeURIComponent(correo.trim())}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(invitacion(p, correo, config))}`
+    marcarEnviado(p.id)
+    setEnviado(true)
   }
 
   const opciones = [p.opcion1, p.opcion2, p.opcion3].filter(Boolean) as string[]
@@ -175,7 +239,10 @@ function Fila({ p, clave }: { p: ParticipanteAdmin; clave: string }) {
         <input type="email" placeholder="correo" aria-label={`Correo de ${quien(p)}`} value={correo} onChange={e => { setCorreo(e.target.value); setGuardado('Guardar') }} />
         <button className="boton chico" onClick={guardar}>{guardado}</button>
       </div>
-      <button className="boton fantasma chico" style={{ marginTop: 8, width: '100%' }} onClick={copiar} disabled={!correo}>{copiado}</button>
+      <div className="acciones-fila">
+        <button className="boton chico" onClick={enviarCorreo} disabled={!correo.trim()}>{enviado ? '✓ Correo abierto · reenviar' : '✉️ Enviar por correo'}</button>
+        <button className="boton fantasma chico" onClick={copiar} disabled={!correo.trim()}>{copiado === 'Copiar invitación' ? '📋 Copiar' : copiado}</button>
+      </div>
       {opciones.length > 0 && (
         <details>
           <summary>Ver carta</summary>
