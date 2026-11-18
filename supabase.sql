@@ -108,7 +108,7 @@ begin
     exit when v_ok;
   end loop;
   insert into asignaciones (da, recibe)
-  select p_ids[i], v_rec[i] from generate_subscripts(p_ids, 1) i;
+  select p_ids[g.k], v_rec[g.k] from generate_subscripts(p_ids, 1) as g(k);
 end $$;
 
 -- ---------- Funciones para participantes ----------
