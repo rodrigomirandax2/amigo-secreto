@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Hero, ILUSTRACION } from './Decoracion'
 import { nombreFamilia } from './colores'
-import { DEMO, quien, rpc, textoError, type DatosAdmin, type ParticipanteAdmin } from './supabase'
+import { quien, rpc, textoError, type DatosAdmin, type ParticipanteAdmin } from './supabase'
 
 type Estado = { tipo: 'ok' | 'error' | ''; texto: string }
 const vacio: Estado = { tipo: '', texto: '' }
@@ -19,7 +19,7 @@ function Cabeza({ icono, titulo, sub }: { icono: string; titulo: string; sub?: s
 }
 
 // La sesión del panel queda guardada en este navegador hasta "Cerrar sesión".
-const CLAVE_SESION = DEMO ? 'amigoSecretoAdminDemo' : 'amigoSecretoAdmin'
+const CLAVE_SESION = 'amigoSecretoAdmin'
 function leerClave() { try { return localStorage.getItem(CLAVE_SESION) ?? '' } catch { return '' } }
 function guardarClave(c: string | null) {
   try { c === null ? localStorage.removeItem(CLAVE_SESION) : localStorage.setItem(CLAVE_SESION, c) } catch { /* sin storage */ }
@@ -58,14 +58,13 @@ export default function Admin() {
   return (
     <div className="contenedor">
       <Hero titulo="Panel del Pascuero" subtitulo="Correos, códigos, cartas y sorteo">
-        {DEMO && <span className="aviso-demo">Modo demo</span>}
       </Hero>
       {!datos ? (
         <section className="tarjeta">
           <Cabeza icono={ILUSTRACION.arbol} titulo="Administrador" sub="Sólo para quien organiza" />
           <form onSubmit={entrar}>
             <label htmlFor="clave">Clave</label>
-            <input id="clave" type="password" required={!DEMO} value={clave} onChange={e => setClave(e.target.value)} />
+            <input id="clave" type="password" required value={clave} onChange={e => setClave(e.target.value)} />
             <button type="submit" className="boton">Entrar</button>
             {error && <div className="mensaje-estado error">{error}</div>}
           </form>

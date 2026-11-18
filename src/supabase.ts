@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { rpcDemo } from './demo'
 
 // La clave publishable es pública por diseño: la seguridad está en las funciones de supabase.sql.
 const sb = createClient(
@@ -7,11 +6,8 @@ const sb = createClient(
   'sb_publishable_rne4kif7krBfRt4ttAwegA_BnnBP6aZ',
 )
 
-/** Sólo para pruebas: con ?demo en la URL se usan los datos de ejemplo de src/demo.ts. */
-export const DEMO = new URLSearchParams(location.search).has('demo')
 
 export async function rpc<T = void>(funcion: string, args: Record<string, unknown>): Promise<T> {
-  if (DEMO) return rpcDemo(funcion) as T
   const { data, error } = await sb.rpc(funcion, args)
   if (error) throw new Error(error.message)
   return data as T

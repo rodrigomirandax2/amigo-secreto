@@ -5,21 +5,17 @@ import FotoNinos from './FotoNinos'
 import Modal from './Modal'
 import { colorFamilia, nombreFamilia } from './colores'
 import Cartas from './Cartas'
-import { DEMO, rpc, textoError, type Persona, type Yo } from './supabase'
+import { rpc, textoError, type Persona, type Yo } from './supabase'
 
 interface Sesion { correo: string; codigo: string }
 type Pestana = 'arbol' | 'amigo' | 'carta'
 const CLAVE = 'amigoSecreto'
-// ?demo=regalo: entra solo y va directo al regalo cerrado, para probar la revelación.
-const SOLO_REGALO = DEMO && ['regalo', 'amigo-sin-carta'].includes(new URLSearchParams(location.search).get('demo') ?? '')
 const entrada = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } }
 
 function leerSesion(): Sesion | null {
-  if (DEMO) return null
   try { return JSON.parse(localStorage.getItem(CLAVE) ?? 'null') } catch { return null }
 }
 function guardarSesion(s: Sesion | null) {
-  if (DEMO) return
   try { s ? localStorage.setItem(CLAVE, JSON.stringify(s)) : localStorage.removeItem(CLAVE) } catch { /* sin storage */ }
 }
 
@@ -34,7 +30,7 @@ export default function Participante() {
     guardarSesion(s)
     setSesion(s)
     setYo(datos)
-    setPestana(SOLO_REGALO ? 'amigo' : datos.opcion1 ? 'arbol' : 'carta')
+    setPestana(datos.opcion1 ? 'arbol' : 'carta')
   }
 
   // Al guardar la primera carta se habilita "Mi amigo".
@@ -45,7 +41,7 @@ export default function Participante() {
   }
 
   useEffect(() => {
-    const previa = SOLO_REGALO ? { correo: 'demo@ejemplo.cl', codigo: '0000' } : leerSesion()
+    const previa = leerSesion()
     if (!previa) { setCargando(false); return }
     entrar(previa).catch(() => guardarSesion(null)).finally(() => setCargando(false))
   }, [])
@@ -61,7 +57,6 @@ export default function Participante() {
   if (!sesion || !yo) {
     return (
       <div className="contenedor">
-        {DEMO && <div style={{ textAlign: 'center' }}><span className="aviso-demo">Modo demo</span></div>}
         <FotoNinos />
         <Entrar onEntrar={entrar} />
       </div>
@@ -75,7 +70,6 @@ export default function Participante() {
           {yo.monto && <span className="dato">💰 {yo.monto}</span>}
           {yo.fecha && <span className="dato">📅 {yo.fecha}</span>}
         </div>
-        {DEMO && <span className="aviso-demo">Modo demo</span>}
       </Hero>
 
       {!yo.opcion1 ? (
@@ -243,9 +237,8 @@ function Entrar({ onEntrar }: { onEntrar: (s: Sesion) => Promise<void> }) {
 
 function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHecho: boolean; irACarta: () => void }) {
   const [amigo, setAmigo] = useState<Persona | null>(null)
-  // Una vez abierto el regalo, queda abierto (en el demo, ya viene abierto).
+  // Una vez abierto el regalo, queda abierto.
   const [abierto, setAbierto] = useState(() => {
-    if (DEMO) return !SOLO_REGALO && new URLSearchParams(location.search).get('demo') !== 'sin-carta'
     try { return localStorage.getItem('amigoSecretoRevelado') === sesion.correo } catch { return false }
   })
 
@@ -274,7 +267,7 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
     const t = setTimeout(() => {
       setCuenta(null)
       setAbierto(true)
-      try { if (!DEMO) localStorage.setItem('amigoSecretoRevelado', sesion.correo) } catch { /* sin storage */ }
+      try { localStorage.setItem('amigoSecretoRevelado', sesion.correo) } catch { /* sin storage */ }
       setTimeout(lanzarConfeti, 250)
     }, 450)
     return () => clearTimeout(t)
