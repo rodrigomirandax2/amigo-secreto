@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Hero, ILUSTRACION } from './Decoracion'
 import { nombreFamilia } from './colores'
-import { DEMO, quien, rpc, textoError, type DatosAdmin, type ParticipanteAdmin } from './supabase'
+import { DEMO, MODO_DEMO, quien, rpc, textoError, type DatosAdmin, type ParticipanteAdmin } from './supabase'
 
 type Estado = { tipo: 'ok' | 'error' | ''; texto: string }
 const vacio: Estado = { tipo: '', texto: '' }
@@ -170,6 +170,8 @@ type Config = DatosAdmin['config']
 
 function invitacion(p: ParticipanteAdmin, correo: string, config: Config) {
   const link = `${location.origin}${import.meta.env.BASE_URL}?correo=${encodeURIComponent(correo.trim())}`
+    // Mientras la app esté en modo demo, el link de prueba apunta a la base real.
+    + (!DEMO && MODO_DEMO ? '&real' : '')
   const datos = [config.monto && `💰 Monto máximo: ${config.monto}`, config.fecha && `📅 Intercambio: ${config.fecha}`].filter(Boolean)
   return [
     `¡Hola, ${p.nombre}! 🎅`,
