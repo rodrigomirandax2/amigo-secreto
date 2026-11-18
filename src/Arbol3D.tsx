@@ -8,6 +8,16 @@ import { iniciales } from './iniciales'
 
 
 const ALTO = 4.2
+
+// Solapa del sobre: triángulo plano que baja desde el borde de arriba.
+const SOLAPA = (() => {
+  const f = new THREE.Shape()
+  f.moveTo(-0.21, 0.145)
+  f.lineTo(0.21, 0.145)
+  f.lineTo(0, -0.03)
+  f.closePath()
+  return new THREE.ShapeGeometry(f)
+})()
 const radioEn = (h: number) => 1.75 * (1 - h / (ALTO + 0.35))
 
 interface Props {
@@ -21,7 +31,7 @@ export default function Arbol3D({ cartas, seleccion, onElegir }: Props) {
     <Canvas
       className="arbol-canvas"
       dpr={[1, 2]}
-      camera={{ position: [0, 2.4, 6.4], fov: 38 }}
+      camera={{ position: [0, 2.5, 8.2], fov: 38 }}
       gl={{ antialias: true, alpha: true }}
     >
       <hemisphereLight args={['#dbe7ff', '#0b1a14', 0.9]} />
@@ -198,8 +208,7 @@ function Cartita({ carta, sigla, h, angulo, r, elegida, fase, onElegir }: Cartit
           <meshStandardMaterial color={tiene ? '#fff8ec' : '#6b7280'} roughness={0.6} transparent opacity={tiene ? 1 : 0.55} />
         </mesh>
         {/* Solapa */}
-        <mesh position={[0, 0.045, 0.014]} rotation={[0, 0, Math.PI]} scale={[1, 1, 0.06]}>
-          <coneGeometry args={[0.215, 0.2, 3, 1]} />
+        <mesh position={[0, 0, 0.0135]} geometry={SOLAPA}>
           <meshStandardMaterial color={tiene ? '#f3e6cf' : '#4b5563'} roughness={0.6} transparent opacity={tiene ? 1 : 0.55} />
         </mesh>
         {/* Sello de la familia */}

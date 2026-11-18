@@ -84,14 +84,14 @@ export default function FotoNinos() {
               >
                 <path
                   className="flecha-viva"
-                  d={d} mask={`url(#trazo-${i})`} stroke="#fff" strokeWidth=".9" strokeDasharray="0 2.2" strokeLinecap="round" fill="none"
+                  d={d} mask={`url(#trazo-${i})`} stroke="#1d2340" strokeWidth=".9" strokeDasharray="0 2.2" strokeLinecap="round" fill="none"
                   style={{ animationDuration: `${0.9 + (i % 3) * 0.15}s` }}
                 />
                 <g transform={`translate(${k.destino[0]} ${k.destino[1]}) rotate(${angulo})`}>
                   {/* La punta "toca" al niño: avanza y retrocede. */}
                   <motion.path
                     d="M -1.6 -1.5 L 1.4 0 L -1.6 1.5 Z"
-                    fill="#fff"
+                    fill="#1d2340"
                     initial={{ opacity: 0, x: 0 }}
                     animate={{ opacity: 1, x: [0, 1.4, 0, 0.9, 0, 0] }}
                     transition={{
