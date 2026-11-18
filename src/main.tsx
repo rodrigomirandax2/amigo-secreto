@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Guirnalda, Nieve } from './Decoracion'
+import { Fondo } from './Decoracion'
 import Participante from './Participante'
 import Admin from './Admin'
 import './estilos.css'
@@ -15,8 +15,7 @@ function App() {
   }, [])
   return (
     <>
-      <Nieve />
-      <Guirnalda />
+      <Fondo />
       {hash === '#/admin' ? <Admin /> : <Participante />}
     </>
   )

@@ -1,93 +1,77 @@
 import { useMemo } from 'react'
+import { motion } from 'motion/react'
 import confetti from 'canvas-confetti'
 
-const COLORES = ['#ff4d4d', '#ffd23f', '#3ddc84', '#4dabff', '#ff8cd9']
+// Ilustraciones 3D de Microsoft Fluent Emoji (licencia MIT), fijadas a un commit.
+const BASE = 'https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets'
+export const ILUSTRACION = {
+  pascuero: `${BASE}/Santa%20claus/Default/3D/santa_claus_3d_default.png`,
+  regalo: `${BASE}/Wrapped%20gift/3D/wrapped_gift_3d.png`,
+  arbol: `${BASE}/Christmas%20tree/3D/christmas_tree_3d.png`,
+  copo: `${BASE}/Snowflake/3D/snowflake_3d.png`,
+  carta: `${BASE}/Envelope%20with%20arrow/3D/envelope_with_arrow_3d.png`,
+  brillos: `${BASE}/Sparkles/3D/sparkles_3d.png`,
+  fiesta: `${BASE}/Party%20popper/3D/party_popper_3d.png`,
+}
+
+const COLORES = ['#ff5a6e', '#ffc94d', '#4ade80', '#7dd3fc', '#f0abfc', '#ffffff']
 const reducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export function Nieve() {
+/** Fondo de noche con auroras y nieve fina. */
+export function Fondo() {
   const copos = useMemo(() => {
     if (reducido()) return []
-    return Array.from({ length: 36 }, (_, i) => ({
+    return Array.from({ length: 50 }, (_, i) => ({
       id: i,
-      simbolo: Math.random() < 0.3 ? '❄' : '•',
       left: Math.random() * 100,
-      size: 6 + Math.random() * 12,
-      opacity: 0.4 + Math.random() * 0.6,
-      caida: 8 + Math.random() * 10,
-      mece: 3 + Math.random() * 3,
-      delay: -Math.random() * 18,
+      size: 2 + Math.random() * 4,
+      opacity: 0.25 + Math.random() * 0.6,
+      caida: 10 + Math.random() * 14,
+      delay: -Math.random() * 24,
     }))
   }, [])
   return (
-    <div className="nieve" aria-hidden="true">
+    <div className="fondo" aria-hidden="true">
+      <div className="aurora a1" />
+      <div className="aurora a2" />
+      <div className="aurora a3" />
       {copos.map(c => (
         <span
           key={c.id}
-          style={{
-            left: `${c.left}vw`,
-            fontSize: c.size,
-            opacity: c.opacity,
-            animationDuration: `${c.caida}s, ${c.mece}s`,
-            animationDelay: `${c.delay}s, 0s`,
-          }}
-        >
-          {c.simbolo}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-export function Guirnalda() {
-  return (
-    <div className="guirnalda" aria-hidden="true">
-      {Array.from({ length: 18 }, (_, i) => (
-        <i
-          key={i}
-          style={{ '--c': COLORES[i % COLORES.length], animationDelay: `${(i % 3) * 0.5}s` } as React.CSSProperties}
+          className="copo"
+          style={{ left: `${c.left}vw`, width: c.size, height: c.size, opacity: c.opacity, animationDuration: `${c.caida}s`, animationDelay: `${c.delay}s` }}
         />
       ))}
     </div>
   )
 }
 
-/** Viejito Pascuero, dibujo propio. */
-export function Pascuero() {
+export function Hero({ titulo, subtitulo, children }: { titulo: string; subtitulo?: string; children?: React.ReactNode }) {
   return (
-    <div className="pascuero">
-      <svg viewBox="0 0 120 130" width="110" height="120" role="img" aria-label="Viejito Pascuero">
-        <path d="M22 52 Q30 10 70 12 Q100 14 104 40 L96 44 Q88 26 66 26 Q40 28 36 54 Z" fill="#d62828" />
-        <circle cx="104" cy="42" r="8" fill="#fff" />
-        <rect x="18" y="48" width="84" height="14" rx="7" fill="#fff" />
-        <circle cx="60" cy="74" r="24" fill="#f6c9a8" />
-        <circle cx="51" cy="70" r="3" fill="#3b2a24" />
-        <circle cx="69" cy="70" r="3" fill="#3b2a24" />
-        <circle cx="45" cy="78" r="4" fill="#f4a3a3" opacity=".7" />
-        <circle cx="75" cy="78" r="4" fill="#f4a3a3" opacity=".7" />
-        <circle cx="60" cy="78" r="4.5" fill="#e88b7d" />
-        <path d="M32 80 Q34 120 60 124 Q86 120 88 80 Q80 92 70 88 Q60 96 50 88 Q40 92 32 80 Z" fill="#fff" />
-        <path d="M46 88 Q53 82 60 87 Q67 82 74 88 Q67 92 60 89 Q53 92 46 88 Z" fill="#f2f2f2" stroke="#e3e3e3" />
-        <path d="M54 96 Q60 101 66 96" stroke="#c0392b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      </svg>
-    </div>
+    <header className="hero">
+      <motion.img
+        className="hero-pascuero"
+        src={ILUSTRACION.pascuero}
+        alt=""
+        width={132}
+        height={132}
+        initial={{ y: 20, opacity: 0, scale: 0.8 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', bounce: 0.45 }}
+      />
+      <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        {titulo}
+      </motion.h1>
+      {subtitulo && <p className="hero-sub">{subtitulo}</p>}
+      {children}
+    </header>
   )
 }
 
 export function lanzarConfeti() {
   if (reducido()) return
-  const comun = { particleCount: 60, spread: 70, colors: COLORES, startVelocity: 45 }
-  confetti({ ...comun, angle: 60, origin: { x: 0, y: 0.7 } })
-  confetti({ ...comun, angle: 120, origin: { x: 1, y: 0.7 } })
-  setTimeout(() => confetti({ particleCount: 80, spread: 100, colors: COLORES, origin: { y: 0.5 } }), 250)
-}
-
-export function Encabezado({ titulo, subtitulo, children }: { titulo: string; subtitulo?: string; children?: React.ReactNode }) {
-  return (
-    <header>
-      <Pascuero />
-      <h1>{titulo}</h1>
-      {subtitulo && <p>{subtitulo}</p>}
-      {children}
-    </header>
-  )
+  const comun = { particleCount: 70, spread: 75, colors: COLORES, startVelocity: 48, scalar: 1.1 }
+  confetti({ ...comun, angle: 60, origin: { x: 0, y: 0.75 } })
+  confetti({ ...comun, angle: 120, origin: { x: 1, y: 0.75 } })
+  setTimeout(() => confetti({ particleCount: 90, spread: 110, colors: COLORES, origin: { y: 0.45 }, shapes: ['star', 'circle'] }), 250)
 }
