@@ -23,6 +23,8 @@ const ideas = [
 
 const sinCarta = new URLSearchParams(location.search).get('demo') === 'sin-carta'
 
+const inicio = Date.now()
+
 export function rpcDemo(funcion: string): unknown {
   switch (funcion) {
     case 'entrar':
@@ -41,7 +43,8 @@ export function rpcDemo(funcion: string): unknown {
       }
     case 'cartas':
       return familias.map(([nombre, descripcion, familia, es_nino], i) => {
-        const tiene = i !== 0 && i % 4 !== 3
+        // A los 12 segundos de entrar "llega" la carta de Leslie, para ver el aviso.
+        const tiene = (i !== 0 && i % 4 !== 3) || (i === 7 && Date.now() - inicio > 12_000)
         const [o1, o2, o3, m] = ideas[i % ideas.length]
         return {
           id: i + 1, nombre, descripcion, familia, es_nino,

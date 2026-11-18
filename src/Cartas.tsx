@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ILUSTRACION } from './Decoracion'
 import { colorFamilia, nombreFamilia } from './colores'
@@ -9,6 +9,10 @@ import { rpc, textoError, type CartaDe } from './supabase'
 const Arbol3D = lazy(() => import('./Arbol3D'))
 
 type Vista = 'arbol' | 'lista'
+interface Aviso { id: number; nombre: string; sigla: string; familia: number }
+
+// Cada cuánto se revisa si llegaron cartas nuevas (sólo con la pestaña visible).
+const CADA_MS = 20_000
 
 function soportaWebGL() {
   try {
@@ -30,12 +34,58 @@ export default function Cartas({ correo, codigo, miNombre }: { correo: string; c
   const [error, setError] = useState('')
   const [vista, setVista] = useState<Vista>(() => (soportaWebGL() ? 'arbol' : 'lista'))
   const [abierta, setAbierta] = useState<number | null>(null)
+  const [avisos, setAvisos] = useState<Aviso[]>([])
+  const [nuevas, setNuevas] = useState<Set<number>>(new Set())
+  const conocidas = useRef<Set<number> | null>(null)
 
   useEffect(() => {
-    rpc<CartaDe[]>('cartas', { p_correo: correo, p_codigo: codigo })
-      .then(c => setCartas(c ?? []))
-      .catch(e => setError(textoError(e)))
+    let vivo = true
+    async function cargar() {
+      try {
+        const lista = (await rpc<CartaDe[]>('cartas', { p_correo: correo, p_codigo: codigo })) ?? []
+        if (!vivo) return
+        const escritas = new Set(lista.filter(c => c.opcion1).map(c => c.id))
+        // La primera carga sólo memoriza; las siguientes avisan lo que llegó.
+        const antes = conocidas.current
+        if (antes) {
+          const llegaron = lista.filter(c => escritas.has(c.id) && !antes.has(c.id))
+          if (llegaron.length) {
+            const sig = iniciales(lista)
+            setAvisos(a => [...a, ...llegaron.map(c => ({ id: c.id, nombre: c.nombre, sigla: sig.get(c.id) ?? '', familia: c.familia }))])
+            setNuevas(n => new Set([...n, ...llegaron.map(c => c.id)]))
+            navigator.vibrate?.(60)
+          }
+        }
+        conocidas.current = escritas
+        setCartas(lista)
+      } catch (e) {
+        if (vivo && !conocidas.current) setError(textoError(e))
+      }
+    }
+    cargar()
+    const reloj = setInterval(() => { if (document.visibilityState === 'visible') cargar() }, CADA_MS)
+    // Al volver a la app se revisa al tiro.
+    const alVolver = () => { if (document.visibilityState === 'visible') cargar() }
+    document.addEventListener('visibilitychange', alVolver)
+    return () => { vivo = false; clearInterval(reloj); document.removeEventListener('visibilitychange', alVolver) }
   }, [correo, codigo])
+
+  // Cada aviso se va solo a los 5 segundos.
+  useEffect(() => {
+    if (!avisos.length) return
+    const t = setTimeout(() => setAvisos(a => a.slice(1)), 5000)
+    return () => clearTimeout(t)
+  }, [avisos])
+
+  function abrirDesdeAviso(id: number) {
+    setAvisos(a => a.filter(x => x.id !== id))
+    alAbrir(id)
+  }
+
+  function alAbrir(id: number | null) {
+    setAbierta(id)
+    if (id !== null) setNuevas(n => { const m = new Set(n); m.delete(id); return m })
+  }
 
   const conCarta = useMemo(() => (cartas ?? []).filter(c => c.opcion1), [cartas])
   const siglas = useMemo(() => iniciales(cartas ?? []), [cartas])
@@ -78,12 +128,12 @@ export default function Cartas({ correo, codigo, miNombre }: { correo: string; c
           <div className="arbol-lienzo">
             <SiFalla alFallar={() => setVista('lista')}>
               <Suspense fallback={<p className="nota arbol-cargando">Armando el arbolito…</p>}>
-                <Arbol3D cartas={cartas} seleccion={abierta} onElegir={setAbierta} />
+                <Arbol3D cartas={cartas} seleccion={abierta} nuevas={nuevas} onElegir={alAbrir} />
               </Suspense>
             </SiFalla>
           </div>
         ) : (
-          <Lista cartas={cartas} siglas={siglas} miNombre={miNombre} onAbrir={setAbierta} />
+          <Lista cartas={cartas} siglas={siglas} nuevas={nuevas} miNombre={miNombre} onAbrir={alAbrir} />
         )}
 
         <div className="leyenda">
@@ -92,6 +142,30 @@ export default function Cartas({ correo, codigo, miNombre }: { correo: string; c
           ))}
         </div>
       </section>
+
+      <div className="avisos" aria-live="polite">
+        <AnimatePresence>
+          {avisos.map(a => (
+            <motion.button
+              key={a.id}
+              layout
+              className="aviso"
+              onClick={() => abrirDesdeAviso(a.id)}
+              initial={{ opacity: 0, y: -40, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: 'spring', bounce: 0.4 }}
+            >
+              <motion.span className="aviso-icono" animate={{ rotate: [0, -12, 12, -8, 8, 0] }} transition={{ duration: 0.8, delay: 0.2 }}>💌</motion.span>
+              <span className="aviso-texto">
+                <strong>¡Llegó una carta!</strong>
+                <small>{a.nombre} colgó su carta en el árbol</small>
+              </span>
+              <span className="avatar" style={{ background: colorFamilia(a.familia) }}>{a.sigla}</span>
+            </motion.button>
+          ))}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {actual && (
@@ -111,7 +185,7 @@ export default function Cartas({ correo, codigo, miNombre }: { correo: string; c
   )
 }
 
-function Lista({ cartas, siglas, miNombre, onAbrir }: { cartas: CartaDe[]; siglas: Map<number, string>; miNombre: string; onAbrir: (id: number) => void }) {
+function Lista({ cartas, siglas, nuevas, miNombre, onAbrir }: { cartas: CartaDe[]; siglas: Map<number, string>; nuevas: Set<number>; miNombre: string; onAbrir: (id: number) => void }) {
   const familias = [...new Set(cartas.map(c => c.familia))]
   return (
     <div className="lista-cartas">
@@ -127,7 +201,7 @@ function Lista({ cartas, siglas, miNombre, onAbrir }: { cartas: CartaDe[]; sigla
                   <strong>{c.nombre}{c.nombre === miNombre && ' (tú)'}</strong>
                   <small>{c.descripcion || (c.es_nino ? 'niño/a' : '')}</small>
                 </span>
-                <span className={`chip ${tiene ? 'si' : 'no'}`}>{tiene ? 'Leer ✉️' : 'Sin carta'}</span>
+                <span className={`chip ${nuevas.has(c.id) ? 'nueva' : tiene ? 'si' : 'no'}`}>{nuevas.has(c.id) ? '¡Nueva! 💌' : tiene ? 'Leer ✉️' : 'Sin carta'}</span>
               </button>
             )
           })}

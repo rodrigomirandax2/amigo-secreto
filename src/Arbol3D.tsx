@@ -23,10 +23,11 @@ const radioEn = (h: number) => 1.75 * (1 - h / (ALTO + 0.35))
 interface Props {
   cartas: CartaDe[]
   seleccion: number | null
+  nuevas: Set<number>
   onElegir: (id: number) => void
 }
 
-export default function Arbol3D({ cartas, seleccion, onElegir }: Props) {
+export default function Arbol3D({ cartas, seleccion, nuevas, onElegir }: Props) {
   return (
     <Canvas
       className="arbol-canvas"
@@ -37,7 +38,7 @@ export default function Arbol3D({ cartas, seleccion, onElegir }: Props) {
       <hemisphereLight args={['#dbe7ff', '#0b1a14', 0.9]} />
       <directionalLight position={[3, 6, 5]} intensity={1.6} />
       <pointLight position={[0, 4.6, 1.5]} intensity={8} distance={6} color="#ffd27a" />
-      <Escena cartas={cartas} seleccion={seleccion} onElegir={onElegir} />
+      <Escena cartas={cartas} seleccion={seleccion} nuevas={nuevas} onElegir={onElegir} />
       <Sparkles count={70} scale={[6, 5.5, 6]} position={[0, 2.2, 0]} size={2.2} speed={0.25} color="#ffffff" opacity={0.7} />
       <Controles pausado={seleccion !== null} />
     </Canvas>
@@ -67,7 +68,7 @@ function Controles({ pausado }: { pausado: boolean }) {
   )
 }
 
-function Escena({ cartas, seleccion, onElegir }: Props) {
+function Escena({ cartas, seleccion, nuevas, onElegir }: Props) {
   // Cartitas en espiral alrededor del árbol (ángulo áureo para que no se tapen).
   const posiciones = useMemo(() => {
     const n = cartas.length
@@ -91,6 +92,7 @@ function Escena({ cartas, seleccion, onElegir }: Props) {
           sigla={siglas.get(c.id) ?? ''}
           {...posiciones[k]}
           elegida={seleccion === c.id}
+          nueva={nuevas.has(c.id)}
           onElegir={onElegir}
           fase={k * 0.7}
         />
@@ -158,11 +160,12 @@ interface CartitaProps {
   angulo: number
   r: number
   elegida: boolean
+  nueva: boolean
   fase: number
   onElegir: (id: number) => void
 }
 
-function Cartita({ carta, sigla, h, angulo, r, elegida, fase, onElegir }: CartitaProps) {
+function Cartita({ carta, sigla, h, angulo, r, elegida, nueva, fase, onElegir }: CartitaProps) {
   const grupo = useRef<THREE.Group>(null)
   const [encima, setEncima] = useState(false)
   const tiene = !!carta.opcion1
@@ -175,7 +178,8 @@ function Cartita({ carta, sigla, h, angulo, r, elegida, fase, onElegir }: Cartit
     const t = clock.getElapsedTime()
     // Se mecen colgando de la rama; la elegida o la que está bajo el dedo crece.
     g.rotation.z = Math.sin(t * 1.6 + fase) * 0.12
-    const meta = elegida ? 1.45 : encima ? 1.2 : 1
+    // Las recién llegadas laten hasta que alguien las abre.
+    const meta = elegida ? 1.45 : encima ? 1.2 : nueva ? 1.25 + Math.sin(t * 5) * 0.12 : 1
     g.scale.setScalar(THREE.MathUtils.lerp(g.scale.x, meta, 0.15))
   })
 
@@ -215,7 +219,7 @@ function Cartita({ carta, sigla, h, angulo, r, elegida, fase, onElegir }: Cartit
         {/* Sello de lacre con la inicial, en el color de la familia */}
         <mesh position={[0, -0.025, 0.03]}>
           <circleGeometry args={[0.095, 32]} />
-          <meshStandardMaterial map={textura} transparent emissive="#ffffff" emissiveMap={textura} emissiveIntensity={elegida ? 0.55 : 0.25} roughness={0.5} />
+          <meshStandardMaterial map={textura} transparent emissive="#ffffff" emissiveMap={textura} emissiveIntensity={elegida || nueva ? 0.6 : 0.25} roughness={0.5} />
         </mesh>
       </group>
     </group>
