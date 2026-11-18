@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Amigo Secreto · Admin</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div class="contenedor">
+  <header>
+    <h1>🎅 Administración</h1>
+    <p>Correos, códigos, cartas y sorteo</p>
+  </header>
+
+  <section class="tarjeta" id="vistaClave">
+    <form id="formClave">
+      <label for="clave">Clave de administrador</label>
+      <input id="clave" type="password" required>
+      <button type="submit">Entrar</button>
+      <div class="error" id="errorClave"></div>
+    </form>
+  </section>
+
+  <div id="panel" class="oculto">
+    <section class="tarjeta">
+      <h2>Datos del intercambio</h2>
+      <label for="monto">Monto máximo</label>
+      <input id="monto" placeholder="Ej: $15.000">
+      <label for="fecha">Fecha</label>
+      <input id="fecha" placeholder="Ej: 24 de diciembre">
+      <button id="btnConfig">Guardar</button>
+      <div id="estadoConfig"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Sorteo</h2>
+      <p class="nota" id="estadoSorteo"></p>
+      <label class="check"><input type="checkbox" id="ninosConNinos"> Niños sólo entre niños y adultos sólo entre adultos</label>
+      <p class="nota">Nadie le regala a alguien de su propia familia. El resultado no se muestra aquí: cada uno ve el suyo.</p>
+      <button id="btnSortear">Hacer sorteo</button>
+      <button id="btnAnular" class="secundario">Anular sorteo</button>
+      <div id="estadoAccion"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Participantes</h2>
+      <p class="nota" id="resumen"></p>
+      <div id="lista"></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+let clave = '';
+
+const msg = e => (e && e.message ? e.message : String(e)).replace(/^.*?: /, '');
+const el = (tag, props = {}, ...hijos) => {
+  const n = Object.assign(document.createElement(tag), props);
+  hijos.forEach(h => n.append(h));
+  return n;
+};
+const urlBase = () => location.href.replace(/admin\.html.*$/, '');
+
+async function cargar() {
+  const { data, error } = await sb.rpc('admin_listar', { p_clave: clave });
+  if (error) throw error;
+  $('vistaClave').classList.add('oculto');
+  $('panel').classList.remove('oculto');
+  $('monto').value = data.config.monto || '';
+  $('fecha').value = data.config.fecha || '';
+  $('estadoSorteo').textContent = data.config.sorteo_hecho ? '✅ El sorteo ya está hecho.' : 'El sorteo todavía no se hace.';
+  const ps = data.participantes || [];
+  const conCarta = ps.filter(p => p.opcion1).length;
+  const conCorreo = ps.filter(p => p.correo).length;
+  $('resumen').textContent = `${ps.length} personas · ${conCorreo} con correo · ${conCarta} con carta`;
+  const lista = $('lista');
+  lista.innerHTML = '';
+  ps.forEach(p => lista.append(fila(p)));
+}
+
+function fila(p) {
+  const correo = el('input', { type: 'email', value: p.correo || '', placeholder: 'correo' });
+  const guardar = el('button', { textContent: 'Guardar' });
+  guardar.onclick = async () => {
+    const { error } = await sb.rpc('admin_guardar_correo', { p_clave: clave, p_id: p.id, p_correo: correo.value });
+    guardar.textContent = error ? 'Error' : '✓';
+    if (error) alert(msg(error));
+  };
+  const copiar = el('button', { textContent: 'Copiar invitación', className: 'secundario' });
+  copiar.onclick = async () => {
+    const texto = `🎄 Amigo Secreto\nEntra aquí: ${urlBase()}?correo=${encodeURIComponent(correo.value)}\nTu correo: ${correo.value}\nTu código: ${p.codigo}`;
+    try { await navigator.clipboard.writeText(texto); copiar.textContent = '¡Copiada!'; }
+    catch { prompt('Copia este texto:', texto); }
+  };
+  const chip = el('span', { className: 'chip ' + (p.opcion1 ? 'si' : 'no'), textContent: p.opcion1 ? 'con carta' : 'sin carta' });
+  const titulo = el('strong', { textContent: p.descripcion ? `${p.nombre}, ${p.descripcion}` : p.nombre });
+  const n = el('div', { className: 'fila' },
+    el('div', { className: 'cabeza' }, titulo, chip),
+    el('div', { className: 'nota' }, `Familia ${p.familia} · código `, el('span', { className: 'codigo', textContent: p.codigo })),
+    el('div', { className: 'linea' }, correo, guardar),
+  );
+  n.append(copiar);
+  copiar.style.marginTop = '8px';
+  if (p.opcion1) {
+    const ul = el('ul', { className: 'opciones' });
+    [p.opcion1, p.opcion2, p.opcion3].forEach(o => ul.append(el('li', { textContent: o })));
+    const det = el('details', {}, el('summary', { textContent: 'Ver carta' }), ul);
+    if (p.mensaje) det.append(el('p', { className: 'nota', textContent: `“${p.mensaje}”` }));
+    n.append(det);
+  }
+  return n;
+}
+
+$('formClave').onsubmit = async e => {
+  e.preventDefault();
+  clave = $('clave').value;
+  $('errorClave').textContent = '';
+  try { await cargar(); } catch (err) { $('errorClave').textContent = msg(err); }
+};
+
+$('btnConfig').onclick = async () => {
+  const { error } = await sb.rpc('admin_guardar_config', { p_clave: clave, p_monto: $('monto').value, p_fecha: $('fecha').value });
+  $('estadoConfig').className = error ? 'error' : 'ok';
+  $('estadoConfig').textContent = error ? msg(error) : 'Guardado';
+};
+
+$('btnSortear').onclick = async () => {
+  if (!confirm('¿Hacer el sorteo? Si ya había uno, se reemplaza.')) return;
+  const { error } = await sb.rpc('admin_sortear', { p_clave: clave, p_ninos_con_ninos: $('ninosConNinos').checked });
+  $('estadoAccion').className = error ? 'error' : 'ok';
+  $('estadoAccion').textContent = error ? msg(error) : '¡Sorteo hecho! Ya pueden ver a su amigo secreto.';
+  if (!error) cargar();
+};
+
+$('btnAnular').onclick = async () => {
+  if (!confirm('¿Anular el sorteo? Nadie verá a su amigo secreto hasta que sortees de nuevo.')) return;
+  const { error } = await sb.rpc('admin_anular_sorteo', { p_clave: clave });
+  $('estadoAccion').className = error ? 'error' : 'ok';
+  $('estadoAccion').textContent = error ? msg(error) : 'Sorteo anulado.';
+  if (!error) cargar();
+};
+</script>
+</body>
+</html>
