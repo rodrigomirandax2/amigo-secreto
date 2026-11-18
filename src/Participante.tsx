@@ -10,6 +10,8 @@ import { DEMO, rpc, textoError, type Persona, type Yo } from './supabase'
 interface Sesion { correo: string; codigo: string }
 type Pestana = 'arbol' | 'amigo' | 'carta'
 const CLAVE = 'amigoSecreto'
+// ?demo=regalo: entra solo y va directo al regalo cerrado, para probar la revelación.
+const SOLO_REGALO = DEMO && new URLSearchParams(location.search).get('demo') === 'regalo'
 const entrada = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } }
 
 function leerSesion(): Sesion | null {
@@ -32,7 +34,7 @@ export default function Participante() {
     guardarSesion(s)
     setSesion(s)
     setYo(datos)
-    setPestana(datos.opcion1 ? 'arbol' : 'carta')
+    setPestana(SOLO_REGALO ? 'amigo' : datos.opcion1 ? 'arbol' : 'carta')
   }
 
   // Al guardar la primera carta se habilita "Mi amigo".
@@ -43,7 +45,7 @@ export default function Participante() {
   }
 
   useEffect(() => {
-    const previa = leerSesion()
+    const previa = SOLO_REGALO ? { correo: 'demo@ejemplo.cl', codigo: '0000' } : leerSesion()
     if (!previa) { setCargando(false); return }
     entrar(previa).catch(() => guardarSesion(null)).finally(() => setCargando(false))
   }, [])
@@ -243,7 +245,7 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
   const [amigo, setAmigo] = useState<Persona | null>(null)
   // Una vez abierto el regalo, queda abierto (en el demo, ya viene abierto).
   const [abierto, setAbierto] = useState(() => {
-    if (DEMO) return new URLSearchParams(location.search).get('demo') !== 'sin-carta'
+    if (DEMO) return !SOLO_REGALO && new URLSearchParams(location.search).get('demo') !== 'sin-carta'
     try { return localStorage.getItem('amigoSecretoRevelado') === sesion.correo } catch { return false }
   })
 
