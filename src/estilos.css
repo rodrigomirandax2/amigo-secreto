@@ -258,3 +258,6 @@ details .opciones { margin-top: 10px; }
 .regalo { display: block; margin: 0 auto; }
 .tarjeta-cabeza.centrada { flex-direction: column; text-align: center; gap: 6px; }
 .tarjeta-cabeza.centrada img { width: 52px; height: 52px; }
+.sin-carta-amigo { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; background: #fff7db; border: 1px dashed rgba(161, 98, 7, .35); color: #854d0e; }
+.sin-carta-amigo p { margin: 0; font-size: .92rem; line-height: 1.4; }
+.sin-carta-amigo img { flex: none; }

@@ -293,26 +293,23 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
 
   const opciones = [amigo.opcion1, amigo.opcion2, amigo.opcion3].filter(Boolean) as string[]
 
-  // Sin carta de tu amigo no hay pistas: el nombre espera hasta que la escriba.
-  if (opciones.length === 0) {
-    return (
-      <section className="tarjeta" style={{ textAlign: 'center' }}>
-        <img src={ILUSTRACION.carta} alt="" width={64} height={64} />
-        <h2>Tu amigo aún no escribe su carta</h2>
-        <p className="nota">Cuando la escriba, aquí verás los 3 regalos que le gustaría recibir y podrás descubrir quién es. Vuelve más tarde 🎄</p>
-      </section>
-    )
-  }
-
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza centrada">
         <img src={ILUSTRACION.brillos} alt="" />
         <div>
           <h2>Tu amigo secreto</h2>
-          <p>Esto es lo que le gustaría recibir</p>
+          <p>{opciones.length ? 'Esto es lo que le gustaría recibir' : 'Todavía no sabemos qué le gustaría'}</p>
         </div>
       </div>
+
+      {/* Sin carta igual se puede descubrir quién es; los regalos aparecen cuando la escriba. */}
+      {opciones.length === 0 && (
+        <div className="sin-carta-amigo">
+          <img src={ILUSTRACION.carta} alt="" width={48} height={48} />
+          <p><strong>Aún no escribe su carta.</strong> Vuelve más tarde para ver los 3 regalos que le gustaría recibir 🎄</p>
+        </div>
+      )}
 
       <ul className="opciones">
         {opciones.map((o, i) => (

@@ -159,11 +159,6 @@ begin
   if p.opcion1 is null then raise exception 'Primero escribe tu carta'; end if;
   select x.* into a from asignaciones s join participantes x on x.id = s.recibe where s.da = p.id;
   if a.id is null then return null; end if;
-  -- Sin carta de tu amigo, todavía no se revela quién es.
-  if a.opcion1 is null then
-    return json_build_object('nombre', null, 'descripcion', null,
-      'opcion1', null, 'opcion2', null, 'opcion3', null, 'mensaje', null);
-  end if;
   return json_build_object(
     'nombre', a.nombre, 'descripcion', a.descripcion,
     'opcion1', a.opcion1, 'opcion2', a.opcion2, 'opcion3', a.opcion3,
