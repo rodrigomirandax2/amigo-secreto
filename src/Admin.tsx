@@ -221,7 +221,10 @@ function Fila({ p, clave, config }: { p: ParticipanteAdmin; clave: string; confi
   // Abre la app de correo con todo escrito: sólo falta apretar Enviar.
   function enviarCorreo() {
     const asunto = `🎄 #TeamNavideño: ya está el sorteo del amigo secreto`
-    location.href = `mailto:${encodeURIComponent(correo.trim())}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(invitacion(p, correo, config))}`
+    // Gmail web con el correo escrito: funciona aunque el equipo no tenga app de correo configurada.
+    const url = 'https://mail.google.com/mail/?view=cm&fs=1'
+      + `&to=${encodeURIComponent(correo.trim())}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(invitacion(p, correo, config))}`
+    window.open(url, '_blank', 'noopener')
     marcarEnviado(p.id)
     setEnviado(true)
   }
