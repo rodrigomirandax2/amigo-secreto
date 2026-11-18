@@ -235,3 +235,14 @@ details .opciones { margin-top: 10px; }
   background: var(--hundido); border: 1px solid var(--linea); transition: background .15s, color .15s, transform .1s; }
 .nombre-chip:active { transform: scale(.97); }
 .nombre-chip.elegido { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--rojo), var(--rojo-2)); box-shadow: 0 6px 18px rgba(225, 29, 72, .3); }
+
+/* Hojas modales (código y confirmación) */
+.hoja.modal { touch-action: auto; padding-top: 10px; }
+.modal-codigo, .modal-confirmar { display: grid; justify-items: center; text-align: center; gap: 4px; padding-bottom: 6px; }
+.modal-codigo h2, .modal-confirmar h2 { margin: 6px 0 0; font-size: 1.4rem; }
+.modal-codigo .nota, .modal-confirmar .nota { margin: 2px 0 8px; }
+.modal-codigo .boton, .modal-confirmar .boton { margin-top: 12px; }
+.modal-confirmar .opciones, .modal-confirmar .cita { width: 100%; text-align: left; }
+.avatar.grande { width: 60px; height: 60px; font-size: 1.5rem; }
+.codigo-grande { width: 220px; text-align: center; font-size: 2rem; font-weight: 800; letter-spacing: .5em; padding: 14px 0 14px .5em; font-variant-numeric: tabular-nums; }
+.aviso-candado { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff7db; color: #854d0e; font-size: .88rem; font-weight: 600; text-align: left; }

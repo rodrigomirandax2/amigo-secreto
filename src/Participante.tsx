@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Hero, ILUSTRACION, lanzarConfeti } from './Decoracion'
 import FotoNinos from './FotoNinos'
+import Modal from './Modal'
 import { colorFamilia, nombreFamilia } from './colores'
 import Cartas from './Cartas'
 import { DEMO, rpc, textoError, type Persona, type Yo } from './supabase'
@@ -180,7 +181,7 @@ function Entrar({ onEntrar }: { onEntrar: (s: Sesion) => Promise<void> }) {
                       key={n.id}
                       className={`nombre-chip ${elegido?.id === n.id ? 'elegido' : ''}`}
                       aria-pressed={elegido?.id === n.id}
-                      onClick={() => { setElegido(n); setError('') }}
+                      onClick={() => { setElegido(n); setCodigo(''); setError('') }}
                     >
                       {n.nombre}
                     </button>
@@ -196,17 +197,39 @@ function Entrar({ onEntrar }: { onEntrar: (s: Sesion) => Promise<void> }) {
           </>
         )}
 
-        <AnimatePresence>
-          {(modo === 'correo' || elegido) && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
-              <label htmlFor="codigo">{elegido && modo === 'nombre' ? `Código de ${elegido.nombre}` : 'Código de 4 dígitos'}</label>
-              <input id="codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={4} placeholder="••••" required value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ''))} />
-              <button type="submit" className="boton" disabled={enviando || codigo.length < 4}>{enviando ? 'Entrando…' : 'Entrar'}</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {error && <div className="mensaje-estado error">{error}</div>}
+        {modo === 'correo' && (
+          <>
+            <label htmlFor="codigo">Código de 4 dígitos</label>
+            <input id="codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={4} placeholder="••••" required value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ''))} />
+            <button type="submit" className="boton" disabled={enviando || codigo.length < 4}>{enviando ? 'Entrando…' : 'Entrar'}</button>
+            {error && <div className="mensaje-estado error">{error}</div>}
+          </>
+        )}
       </form>
+
+      <Modal abierto={modo === 'nombre' && !!elegido} onCerrar={() => { setElegido(null); setCodigo(''); setError('') }} etiqueta="Escribe tu código">
+        {elegido && (
+          <form onSubmit={enviar} className="modal-codigo">
+            <span className="avatar grande" style={{ background: colorFamilia(elegido.familia) }}>{elegido.nombre[0]}</span>
+            <h2>Hola, {elegido.nombre.split(' ')[0]} 👋</h2>
+            <p className="nota">Escribe el código de 4 dígitos que te llegó por correo.</p>
+            <input
+              className="codigo-grande"
+              aria-label="Código de 4 dígitos"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              maxLength={4}
+              placeholder="• • • •"
+              value={codigo}
+              onChange={e => { setCodigo(e.target.value.replace(/\D/g, '')); setError('') }}
+            />
+            {error && <div className="mensaje-estado error">{error}</div>}
+            <button type="submit" className="boton" disabled={enviando || codigo.length < 4}>{enviando ? 'Entrando…' : 'Entrar'}</button>
+            <button type="button" className="enlace" onClick={() => { setElegido(null); setCodigo(''); setError('') }}>No soy yo</button>
+          </form>
+        )}
+      </Modal>
       <div style={{ textAlign: 'center' }}>
         <button type="button" className="enlace" onClick={() => { setModo(modo === 'nombre' ? 'correo' : 'nombre'); setError('') }}>
           {modo === 'nombre' ? 'Prefiero entrar con mi correo' : 'Entrar eligiendo mi nombre'}
@@ -325,9 +348,16 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
   // Una vez enviada, las 3 opciones quedan fijas: sólo el mensaje se puede cambiar.
   const enviada = !!inicial.opcion1
 
-  async function enviar(e: React.FormEvent) {
+  const [confirmando, setConfirmando] = useState(false)
+
+  function pedirEnvio(e: React.FormEvent) {
     e.preventDefault()
-    if (!enviada && !confirm('¿Enviar tu carta? Después no podrás cambiar las 3 opciones, sólo el mensaje.')) return
+    if (enviada) guardar()
+    else setConfirmando(true)
+  }
+
+  async function guardar() {
+    setConfirmando(false)
     setEstado({ tipo: '', texto: 'Enviando…' })
     try {
       await rpc('guardar_carta', {
@@ -360,7 +390,7 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
       ) : (
         <p className="nota">Quien te tocó verá estas opciones antes de saber tu nombre. Piénsalas bien: una vez enviada la carta, sólo podrás cambiar el mensaje.</p>
       )}
-      <form onSubmit={enviar}>
+      <form onSubmit={pedirEnvio}>
         {!enviada && opciones.map((valor, i) => (
           <div className="campo-numerado" key={i}>
             <span>{i + 1}</span>
@@ -379,6 +409,21 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
         <button type="submit" className="boton">{enviada ? 'Guardar mensaje' : 'Enviar mi carta'}</button>
         {estado.texto && <div className={`mensaje-estado ${estado.tipo}`}>{estado.texto}</div>}
       </form>
+
+      <Modal abierto={confirmando} onCerrar={() => setConfirmando(false)} etiqueta="Confirmar envío de la carta">
+        <div className="modal-confirmar">
+          <img src={ILUSTRACION.carta} alt="" width={64} height={64} />
+          <h2>¿Lista tu carta?</h2>
+          <p className="nota">Así la verá el Viejito Pascuero:</p>
+          <ul className="opciones">
+            {opciones.map((o, i) => <li key={i}><span className="num">{i + 1}</span>{o.trim()}</li>)}
+          </ul>
+          {mensaje.trim() && <p className="cita">“{mensaje.trim()}”</p>}
+          <p className="aviso-candado">🔒 Una vez enviada, los 3 regalos quedan fijos. El mensaje lo puedes cambiar cuando quieras.</p>
+          <button className="boton" onClick={guardar}>Sí, enviar mi carta 🎅</button>
+          <button className="boton fantasma" onClick={() => setConfirmando(false)}>Quiero revisarla</button>
+        </div>
+      </Modal>
     </section>
   )
 }
