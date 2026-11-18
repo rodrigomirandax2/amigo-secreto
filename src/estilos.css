@@ -1,0 +1,142 @@
+:root {
+  --rojo: #c8102e;
+  --rojo-osc: #8f0b20;
+  --verde: #14532d;
+  --verde-vivo: #1f8a4c;
+  --oro: #e9b949;
+  --crema: #fffaf2;
+  --papel: #fdf6e7;
+  --tinta: #2b2320;
+  --suave: #6f625b;
+  --borde: #ecdcc4;
+}
+* { box-sizing: border-box; }
+html { background: #0c2a1c; }
+body {
+  margin: 0;
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--tinta);
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% -10%, #1f6b45 0%, transparent 60%),
+    radial-gradient(circle at 15% 85%, rgba(200,16,46,.25) 0%, transparent 40%),
+    #0c2a1c;
+  overflow-x: hidden;
+}
+.contenedor { position: relative; z-index: 2; max-width: 520px; margin: 0 auto; padding: 36px 16px 64px; }
+
+/* Encabezado */
+header { color: #fff; text-align: center; margin-bottom: 22px; }
+.pascuero { display: inline-block; animation: saludar 3.5s ease-in-out infinite; transform-origin: 50% 90%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+@keyframes saludar { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+header h1 {
+  font-family: "Mountains of Christmas", "Nunito", cursive;
+  margin: 4px 0 0; font-size: 2.6rem; line-height: 1; color: #fff;
+  text-shadow: 0 2px 0 var(--rojo), 0 6px 18px rgba(0,0,0,.4);
+}
+header p { margin: 8px 0 0; color: #e7f5ec; font-weight: 600; }
+.datos { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+.datos span { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); padding: 5px 12px; border-radius: 999px; font-size: .9rem; font-weight: 700; }
+.salir { background: none !important; color: #cfe8d9 !important; width: auto !important; margin: 10px auto 0 !important; padding: 4px 8px !important; font-size: .85rem !important; text-decoration: underline; display: block; box-shadow: none !important; }
+
+/* Tarjetas */
+.tarjeta {
+  position: relative; background: var(--crema); border-radius: 18px; padding: 22px 20px 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35); margin-bottom: 18px;
+  border-top: 6px solid var(--rojo);
+}
+.tarjeta::before {
+  content: ""; position: absolute; top: -16px; left: 50%; width: 30px; height: 26px; transform: translateX(-50%);
+  background: radial-gradient(circle at 30% 50%, var(--rojo) 0 7px, transparent 8px),
+              radial-gradient(circle at 70% 50%, var(--rojo) 0 7px, transparent 8px);
+}
+.tarjeta h2 { margin: 0 0 12px; font-size: 1.3rem; color: var(--verde); }
+.carta {
+  background: var(--papel) repeating-linear-gradient(transparent 0 31px, #ead9bd 31px 32px);
+  border-top-color: var(--verde-vivo);
+}
+.carta::before {
+  background: radial-gradient(circle at 30% 50%, var(--verde-vivo) 0 7px, transparent 8px),
+              radial-gradient(circle at 70% 50%, var(--verde-vivo) 0 7px, transparent 8px);
+}
+
+label { display: block; font-weight: 700; margin: 12px 0 4px; font-size: .95rem; }
+input, textarea {
+  width: 100%; padding: 12px 14px; font-size: 1rem; border: 2px solid var(--borde);
+  border-radius: 12px; background: #fff; font-family: inherit; color: var(--tinta);
+}
+input:focus, textarea:focus { outline: none; border-color: var(--oro); box-shadow: 0 0 0 3px rgba(233,185,73,.25); }
+textarea { min-height: 90px; resize: vertical; }
+button {
+  width: 100%; margin-top: 16px; padding: 14px; font-size: 1.05rem; font-weight: 800; font-family: inherit;
+  border: 0; border-radius: 14px; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #e02440, var(--rojo));
+  box-shadow: 0 4px 0 var(--rojo-osc);
+  transition: transform .08s;
+}
+button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rojo-osc); }
+button.secundario { background: #fff; color: var(--rojo); border: 2px solid var(--rojo); box-shadow: none; }
+button.verde { background: linear-gradient(180deg, #27a35c, var(--verde-vivo)); box-shadow: 0 4px 0 var(--verde); }
+button:disabled { opacity: .5; }
+.error { color: var(--rojo); margin-top: 10px; font-weight: 700; }
+.ok { color: var(--verde-vivo); margin-top: 10px; font-weight: 700; }
+.nota { color: var(--suave); font-size: .92rem; }
+.oculto { display: none !important; }
+
+.opciones { list-style: none; padding: 0; margin: 0; }
+.opciones li {
+  background: #fff; border: 2px dashed var(--borde); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 8px; font-size: 1.05rem; font-weight: 600;
+}
+.opciones li::before { content: "🎁 "; }
+
+/* Regalo para revelar */
+.regalo { display: block; margin: 18px auto 4px; width: 150px; height: 150px; cursor: pointer; background: none; border: 0; padding: 0; box-shadow: none; }
+.regalo:active { transform: none; box-shadow: none; }
+.regalo svg { width: 100%; height: 100%; overflow: visible; }
+.regalo .caja { animation: temblar 2.4s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes temblar { 0%,70%,100% { transform: rotate(0); } 75% { transform: rotate(-5deg); } 80% { transform: rotate(5deg); } 85% { transform: rotate(-3deg); } 90% { transform: rotate(3deg); } }
+.regalo .tapa { transition: transform .6s cubic-bezier(.3,1.6,.5,1); transform-origin: 50% 50%; }
+.regalo.abierto .tapa { transform: translate(40px, -70px) rotate(35deg); }
+.regalo.abierto .caja { animation: none; }
+.pista { text-align: center; font-weight: 800; color: var(--rojo); margin: 0; }
+.revelado { text-align: center; font-size: 1.9rem; font-weight: 900; color: var(--verde); margin: 4px 0 0; animation: aparecer .7s cubic-bezier(.3,1.6,.5,1); }
+.revelado small { display: block; font-size: 1rem; color: var(--suave); font-weight: 600; }
+@keyframes aparecer { from { transform: scale(.4) translateY(30px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Nieve, guirnalda y confeti */
+.nieve { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.nieve span { position: absolute; top: -20px; color: #fff; animation-name: caer, mecer; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
+@keyframes caer { to { top: 105vh; } }
+@keyframes mecer { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+.guirnalda { position: fixed; top: 0; left: 0; right: 0; height: 28px; z-index: 3; display: flex; justify-content: space-around; pointer-events: none; }
+.guirnalda::before { content: ""; position: absolute; top: -10px; left: -5%; right: -5%; height: 26px; border-bottom: 2px solid #1b1b1b; border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+.guirnalda i { position: relative; top: 10px; width: 10px; height: 16px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; background: var(--c); box-shadow: 0 0 10px 2px var(--c); animation: brillar 1.5s ease-in-out infinite; }
+.guirnalda i:nth-child(odd) { top: 14px; }
+@keyframes brillar { 50% { opacity: .35; box-shadow: none; } }
+.confeti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+.confeti i { position: absolute; top: 45vh; width: 9px; height: 14px; border-radius: 2px; animation: volar 3s cubic-bezier(.2,.6,.4,1) forwards; }
+@keyframes volar {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  30% { transform: translate(calc(var(--x) * .5), -35vh) rotate(calc(var(--r) * .5)); }
+  100% { transform: translate(var(--x), 60vh) rotate(var(--r)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pascuero, .regalo .caja, .guirnalda i { animation: none; }
+}
+
+/* Administrador */
+.fila { border-top: 1px solid var(--borde); padding: 12px 0; }
+.fila:first-child { border-top: 0; }
+.fila .cabeza { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.fila .codigo { font-family: ui-monospace, monospace; background: #fff; border: 1px solid var(--borde); padding: 2px 8px; border-radius: 6px; }
+.fila .linea { display: flex; gap: 8px; margin-top: 6px; }
+.fila .linea input { padding: 8px; }
+.fila .linea button { width: auto; margin: 0; padding: 8px 12px; font-size: .9rem; }
+.chip { font-size: .8rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+.chip.si { background: #dcfce7; color: #166534; }
+.chip.no { background: #fee2e2; color: #991b1b; }
+details { margin-top: 6px; }
+summary { cursor: pointer; color: var(--rojo); font-weight: 700; }
+.check { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.check input { width: auto; }
