@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Hero, ILUSTRACION, lanzarConfeti } from './Decoracion'
 import FotoNinos from './FotoNinos'
+import { colorFamilia, nombreFamilia } from './colores'
 import Cartas from './Cartas'
 import { DEMO, rpc, textoError, type Persona, type Yo } from './supabase'
 
@@ -120,20 +121,41 @@ export default function Participante() {
 }
 
 
+interface Nombre { id: number; nombre: string; descripcion: string; familia: number; es_nino: boolean }
+
+/**
+ * Se entra tocando tu nombre y escribiendo el código: nadie tiene que tipear su correo.
+ * Si el link trae ?correo= (el de la invitación), entra directo con el correo ya puesto.
+ */
 function Entrar({ onEntrar }: { onEntrar: (s: Sesion) => Promise<void> }) {
-  const [correo, setCorreo] = useState(() => new URLSearchParams(location.search).get('correo') ?? '')
+  const correoUrl = new URLSearchParams(location.search).get('correo') ?? ''
+  const [modo, setModo] = useState<'nombre' | 'correo'>(correoUrl ? 'correo' : 'nombre')
+  const [nombres, setNombres] = useState<Nombre[] | null>(null)
+  const [elegido, setElegido] = useState<Nombre | null>(null)
+  const [correo, setCorreo] = useState(correoUrl)
   const [codigo, setCodigo] = useState('')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  useEffect(() => {
+    rpc<Nombre[]>('nombres', {}).then(n => setNombres(n ?? [])).catch(() => { setNombres([]); setModo('correo') })
+  }, [])
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setEnviando(true)
-    try { await onEntrar({ correo: correo.trim(), codigo: codigo.trim() }) }
+    try {
+      const c = modo === 'nombre' && elegido
+        ? await rpc<string>('correo_por_codigo', { p_id: elegido.id, p_codigo: codigo.trim() })
+        : correo.trim()
+      await onEntrar({ correo: c, codigo: codigo.trim() })
+    }
     catch (err) { setError(textoError(err)) }
     finally { setEnviando(false) }
   }
+
+  const familias = [...new Set((nombres ?? []).map(n => n.familia))]
 
   return (
     <motion.section className="tarjeta" {...entrada} transition={{ delay: 0.2 }}>
@@ -141,17 +163,55 @@ function Entrar({ onEntrar }: { onEntrar: (s: Sesion) => Promise<void> }) {
         <img src={ILUSTRACION.arbol} alt="" />
         <div>
           <h2>Entrar</h2>
-          <p>Con tu correo y el código que te llegó.</p>
+          <p>{modo === 'nombre' ? 'Toca tu nombre y escribe tu código' : 'Con tu correo y el código que te llegó'}</p>
         </div>
       </div>
       <form onSubmit={enviar}>
-        <label htmlFor="correo">Correo</label>
-        <input id="correo" type="email" autoComplete="email" placeholder="tu@correo.cl" required={!DEMO} value={correo} onChange={e => setCorreo(e.target.value)} />
-        <label htmlFor="codigo">Código de 4 dígitos</label>
-        <input id="codigo" inputMode="numeric" maxLength={4} placeholder="••••" required={!DEMO} value={codigo} onChange={e => setCodigo(e.target.value)} />
-        <button type="submit" className="boton" disabled={enviando}>{enviando ? 'Entrando…' : 'Entrar'}</button>
+        {modo === 'nombre' ? (
+          <>
+            {!nombres && <p className="nota">Cargando nombres…</p>}
+            {familias.map(f => (
+              <div key={f} className="grupo-nombres">
+                <p className="familia-titulo"><i className="familia-punto" style={{ background: colorFamilia(f) }} />{nombreFamilia(nombres!, f)}</p>
+                <div className="nombres">
+                  {nombres!.filter(n => n.familia === f).map(n => (
+                    <button
+                      type="button"
+                      key={n.id}
+                      className={`nombre-chip ${elegido?.id === n.id ? 'elegido' : ''}`}
+                      aria-pressed={elegido?.id === n.id}
+                      onClick={() => { setElegido(n); setError('') }}
+                    >
+                      {n.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <label htmlFor="correo">Correo</label>
+            <input id="correo" type="email" autoComplete="email" placeholder="tu@correo.cl" required value={correo} onChange={e => setCorreo(e.target.value)} />
+          </>
+        )}
+
+        <AnimatePresence>
+          {(modo === 'correo' || elegido) && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+              <label htmlFor="codigo">{elegido && modo === 'nombre' ? `Código de ${elegido.nombre}` : 'Código de 4 dígitos'}</label>
+              <input id="codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={4} placeholder="••••" required value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ''))} />
+              <button type="submit" className="boton" disabled={enviando || codigo.length < 4}>{enviando ? 'Entrando…' : 'Entrar'}</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {error && <div className="mensaje-estado error">{error}</div>}
       </form>
+      <div style={{ textAlign: 'center' }}>
+        <button type="button" className="enlace" onClick={() => { setModo(modo === 'nombre' ? 'correo' : 'nombre'); setError('') }}>
+          {modo === 'nombre' ? 'Prefiero entrar con mi correo' : 'Entrar eligiendo mi nombre'}
+        </button>
+      </div>
     </motion.section>
   )
 }

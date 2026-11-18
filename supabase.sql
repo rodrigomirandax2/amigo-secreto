@@ -183,6 +183,25 @@ begin
     from participantes);
 end $$;
 
+create or replace function nombres()
+returns json language sql security definer set search_path = public as $$
+  select coalesce(json_agg(json_build_object(
+      'id', id, 'nombre', nombre, 'descripcion', descripcion, 'familia', familia, 'es_nino', es_nino)
+      order by familia, id), '[]'::json)
+    from participantes
+   where correo is not null;
+$$;
+
+-- Con el código correcto devuelve el correo, y la app sigue entrando como siempre.
+create or replace function correo_por_codigo(p_id int, p_codigo text)
+returns text language plpgsql security definer set search_path = public as $$
+declare v_correo text;
+begin
+  select correo into v_correo from participantes where id = p_id and codigo = trim(p_codigo);
+  if v_correo is null then raise exception 'Código incorrecto'; end if;
+  return v_correo;
+end $$;
+
 -- ---------- Funciones de administrador ----------
 
 create or replace function admin_listar(p_clave text)
@@ -243,6 +262,8 @@ grant execute on function entrar(text, text)                                 to 
 grant execute on function guardar_carta(text, text, text, text, text, text) to anon;
 grant execute on function mi_amigo(text, text)                               to anon;
 grant execute on function cartas(text, text)                                 to anon;
+grant execute on function nombres()                                          to anon;
+grant execute on function correo_por_codigo(int, text)                       to anon;
 grant execute on function admin_listar(text)                                 to anon;
 grant execute on function admin_guardar_correo(text, int, text)              to anon;
 grant execute on function admin_guardar_config(text, text, text)             to anon;

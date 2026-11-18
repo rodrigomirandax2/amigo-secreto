@@ -227,3 +227,11 @@ details .opciones { margin-top: 10px; }
 .aviso-texto small { color: var(--texto-2); font-size: .82rem; }
 .chip.nueva { background: #fff1c2; color: #a16207; }
 .acciones-fila { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
+
+/* Entrar eligiendo tu nombre */
+.grupo-nombres .familia-titulo { margin-top: 12px; }
+.nombres { display: flex; flex-wrap: wrap; gap: 8px; }
+.nombre-chip { min-height: 44px; padding: 10px 14px; border-radius: 999px; font-weight: 700; font-size: .95rem; color: var(--texto);
+  background: var(--hundido); border: 1px solid var(--linea); transition: background .15s, color .15s, transform .1s; }
+.nombre-chip:active { transform: scale(.97); }
+.nombre-chip.elegido { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--rojo), var(--rojo-2)); box-shadow: 0 6px 18px rgba(225, 29, 72, .3); }

@@ -41,6 +41,10 @@ export function rpcDemo(funcion: string): unknown {
         opcion1: 'Un set de Lego de dinosaurios', opcion2: 'Una pelota de fútbol', opcion3: 'Lápices de colores y un cuaderno de dibujo',
         mensaje: 'Me encantan los dinosaurios y el color verde 🦖',
       }
+    case 'nombres':
+      return familias.map(([nombre, descripcion, familia, es_nino], i) => ({ id: i + 1, nombre, descripcion, familia, es_nino }))
+    case 'correo_por_codigo':
+      return 'demo@ejemplo.cl'
     case 'cartas':
       return familias.map(([nombre, descripcion, familia, es_nino], i) => {
         // A los 12 segundos de entrar "llega" la carta de Leslie, para ver el aviso.
