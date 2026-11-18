@@ -252,16 +252,19 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
   const [opciones, setOpciones] = useState([inicial.opcion1 ?? '', inicial.opcion2 ?? '', inicial.opcion3 ?? ''])
   const [mensaje, setMensaje] = useState(inicial.mensaje ?? '')
   const [estado, setEstado] = useState<{ tipo: 'ok' | 'error' | ''; texto: string }>({ tipo: '', texto: '' })
+  // Una vez enviada, las 3 opciones quedan fijas: sólo el mensaje se puede cambiar.
+  const enviada = !!inicial.opcion1
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
+    if (!enviada && !confirm('¿Enviar tu carta? Después no podrás cambiar las 3 opciones, sólo el mensaje.')) return
     setEstado({ tipo: '', texto: 'Enviando…' })
     try {
       await rpc('guardar_carta', {
         p_correo: sesion.correo, p_codigo: sesion.codigo,
         p_opcion1: opciones[0], p_opcion2: opciones[1], p_opcion3: opciones[2], p_mensaje: mensaje,
       })
-      setEstado({ tipo: 'ok', texto: '¡Carta enviada al Viejito Pascuero! 🎅' })
+      setEstado({ tipo: 'ok', texto: enviada ? 'Mensaje guardado ✓' : '¡Carta enviada al Viejito Pascuero! 🎅' })
       onGuardada({ opcion1: opciones[0].trim(), opcion2: opciones[1].trim(), opcion3: opciones[2].trim(), mensaje: mensaje.trim() })
     } catch (err) {
       setEstado({ tipo: 'error', texto: textoError(err) })
@@ -277,9 +280,18 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
           <p>3 regalos que te gustaría recibir</p>
         </div>
       </div>
-      <p className="nota">Quien te tocó verá estas opciones antes de saber tu nombre. Puedes cambiarlas cuando quieras.</p>
+      {enviada ? (
+        <>
+          <p className="nota">🔒 Tus 3 opciones ya están enviadas. Puedes cambiar sólo el mensaje.</p>
+          <ul className="opciones">
+            {opciones.map((o, i) => <li key={i}><span className="num">{i + 1}</span>{o}</li>)}
+          </ul>
+        </>
+      ) : (
+        <p className="nota">Quien te tocó verá estas opciones antes de saber tu nombre. Piénsalas bien: una vez enviada la carta, sólo podrás cambiar el mensaje.</p>
+      )}
       <form onSubmit={enviar}>
-        {opciones.map((valor, i) => (
+        {!enviada && opciones.map((valor, i) => (
           <div className="campo-numerado" key={i}>
             <span>{i + 1}</span>
             <input
@@ -294,7 +306,7 @@ function MiCarta({ sesion, inicial, onGuardada }: { sesion: Sesion; inicial: Yo;
         ))}
         <label htmlFor="mensaje">Algo más (opcional)</label>
         <textarea id="mensaje" maxLength={1000} placeholder="Talla, colores favoritos, lo que no te gusta…" value={mensaje} onChange={e => setMensaje(e.target.value)} />
-        <button type="submit" className="boton">Enviar mi carta</button>
+        <button type="submit" className="boton">{enviada ? 'Guardar mensaje' : 'Enviar mi carta'}</button>
         {estado.texto && <div className={`mensaje-estado ${estado.tipo}`}>{estado.texto}</div>}
       </form>
     </section>

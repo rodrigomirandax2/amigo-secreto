@@ -134,6 +134,11 @@ declare p participantes;
 begin
   p := _participante(p_correo, p_codigo);
   if p.id is null then raise exception 'Correo o código incorrecto'; end if;
+  -- Ya enviada: las 3 opciones quedan fijas y sólo cambia el mensaje.
+  if p.opcion1 is not null then
+    update participantes set mensaje = left(trim(p_mensaje), 1000), actualizado = now() where id = p.id;
+    return;
+  end if;
   if coalesce(trim(p_opcion1), '') = '' or coalesce(trim(p_opcion2), '') = ''
      or coalesce(trim(p_opcion3), '') = '' then
     raise exception 'Escribe las 3 opciones de regalo';
