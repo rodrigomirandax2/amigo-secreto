@@ -254,12 +254,29 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
       .catch(() => setAmigo(null))
   }, [sesion, sorteoHecho])
 
+  // Cuenta regresiva 3, 2, 1 antes de abrir el regalo.
+  const [cuenta, setCuenta] = useState<number | null>(null)
+
   function abrir() {
-    if (abierto) return
-    setAbierto(true)
-    try { if (!DEMO) localStorage.setItem('amigoSecretoRevelado', sesion.correo) } catch { /* sin storage */ }
-    setTimeout(lanzarConfeti, 250)
+    if (abierto || cuenta !== null) return
+    setCuenta(3)
   }
+
+  useEffect(() => {
+    if (cuenta === null) return
+    navigator.vibrate?.(cuenta > 0 ? 40 : [80, 40, 120])
+    if (cuenta > 0) {
+      const t = setTimeout(() => setCuenta(cuenta - 1), 950)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => {
+      setCuenta(null)
+      setAbierto(true)
+      try { if (!DEMO) localStorage.setItem('amigoSecretoRevelado', sesion.correo) } catch { /* sin storage */ }
+      setTimeout(lanzarConfeti, 250)
+    }, 450)
+    return () => clearTimeout(t)
+  }, [cuenta, sesion.correo])
 
   if (!amigo) {
     return (
@@ -309,17 +326,52 @@ function MiAmigo({ sesion, sorteoHecho, irACarta }: { sesion: Sesion; sorteoHech
           {!abierto ? (
             <motion.div key="regalo" exit={{ scale: 1.6, opacity: 0, rotate: 12, transition: { duration: 0.35 } }}>
               <motion.button
+                key={cuenta === null ? 'quieto' : 'cuenta'}
                 className="regalo"
                 onClick={abrir}
                 aria-label="Abrir el regalo y revelar quién es"
-                animate={{ rotate: [0, 0, -7, 7, -4, 4, 0], y: [0, 0, -6, 0, -3, 0, 0] }}
-                transition={{ duration: 2.4, repeat: Infinity, times: [0, 0.6, 0.68, 0.76, 0.84, 0.92, 1] }}
+                // En la cuenta regresiva el regalo tiembla cada vez más fuerte.
+                animate={cuenta === null
+                  ? { rotate: [0, 0, -7, 7, -4, 4, 0], y: [0, 0, -6, 0, -3, 0, 0], scale: 1 }
+                  : { rotate: [-1, 1].map(x => x * (4 + (3 - cuenta) * 5)), y: [0, -4 - (3 - cuenta) * 3], scale: 1 + (3 - cuenta) * 0.08 }}
+                transition={cuenta === null
+                  ? { duration: 2.4, repeat: Infinity, times: [0, 0.6, 0.68, 0.76, 0.84, 0.92, 1] }
+                  : { duration: 0.12 - (3 - cuenta) * 0.025, repeat: Infinity, repeatType: 'mirror', scale: { type: 'spring', bounce: 0.5 } }}
                 whileTap={{ scale: 0.9 }}
               >
                 <span className="regalo-halo" />
                 <img src={ILUSTRACION.regalo} alt="" />
+                <AnimatePresence>
+                  {cuenta !== null && cuenta > 0 && (
+                    <motion.span
+                      key={cuenta}
+                      className="cuenta-numero"
+                      initial={{ scale: 2.4, opacity: 0, rotate: -10 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      exit={{ scale: 0.4, opacity: 0, y: -30 }}
+                      transition={{ type: 'spring', bounce: 0.55, duration: 0.5 }}
+                    >
+                      {cuenta}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </motion.button>
-              <p className="pista">Toca el regalo para saber quién es</p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={cuenta ?? 'pista'}
+                  className={`pista ${cuenta !== null ? 'pista-cuenta' : ''}`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {cuenta === null ? 'Toca el regalo para saber quién es'
+                    : cuenta === 3 ? '¿Quién será…? 🤔'
+                    : cuenta === 2 ? 'Redoble de tambores 🥁'
+                    : cuenta === 1 ? '¡Aquí viene! ✨'
+                    : '¡Ábrelo! 🎁'}
+                </motion.p>
+              </AnimatePresence>
             </motion.div>
           ) : (
             <motion.div

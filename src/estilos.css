@@ -246,3 +246,9 @@ details .opciones { margin-top: 10px; }
 .avatar.grande { width: 60px; height: 60px; font-size: 1.5rem; }
 .codigo-grande { width: 220px; text-align: center; font-size: 2rem; font-weight: 800; letter-spacing: .5em; padding: 14px 0 14px .5em; font-variant-numeric: tabular-nums; }
 .aviso-candado { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff7db; color: #854d0e; font-size: .88rem; font-weight: 600; text-align: left; }
+
+/* Cuenta regresiva sobre el regalo */
+.cuenta-numero { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 5.5rem; line-height: 1; color: #fff;
+  text-shadow: 0 4px 0 var(--rojo), 0 10px 30px rgba(225, 29, 72, .55), 0 0 2px #000; }
+.pista-cuenta { color: var(--rojo); font-size: 1.05rem; font-weight: 800; }
