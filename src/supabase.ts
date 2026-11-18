@@ -7,8 +7,12 @@ const sb = createClient(
   'sb_publishable_rne4kif7krBfRt4ttAwegA_BnnBP6aZ',
 )
 
-/** Con ?demo en la URL no se toca la base: cualquier correo y código entran con datos de ejemplo. */
-export const DEMO = new URLSearchParams(location.search).has('demo')
+/**
+ * Por ahora la app corre con datos en duro (src/demo.ts): cualquier correo y código entran.
+ * Para usar la base real, poner MODO_DEMO en false (o probarla con ?real en la URL).
+ */
+const MODO_DEMO = true
+export const DEMO = new URLSearchParams(location.search).has('demo') || (MODO_DEMO && !new URLSearchParams(location.search).has('real'))
 
 export async function rpc<T = void>(funcion: string, args: Record<string, unknown>): Promise<T> {
   if (DEMO) return rpcDemo(funcion) as T
