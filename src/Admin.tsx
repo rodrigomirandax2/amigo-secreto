@@ -242,7 +242,7 @@ function Fila({ p, clave, config }: { p: ParticipanteAdmin; clave: string; confi
         <button className="boton chico" onClick={guardar}>{guardado}</button>
       </div>
       <div className="acciones-fila">
-        <button className="boton chico" onClick={enviarCorreo} disabled={!correo.trim()}>{enviado ? '✓ Correo abierto · reenviar' : '✉️ Enviar por correo'}</button>
+        <button className="boton chico" onClick={enviarCorreo} disabled={!correo.trim()}>{enviado ? '✓ Gmail abierto · reenviar' : '✉️ Enviar por Gmail'}</button>
         <button className="boton fantasma chico" onClick={copiar} disabled={!correo.trim()}>{copiado === 'Copiar invitación' ? '📋 Copiar' : copiado}</button>
       </div>
       {opciones.length > 0 && (
